@@ -28,7 +28,8 @@
   body{
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
-    min-height:100vh; display:flex; justify-content:center; align-items:center; color:#333; padding:10px;
+    min-height:100vh; display:flex; justify-content:center; align-items:flex-start; /* Ajustado al borde superior */
+    color:#333; padding:10px; padding-top: 2rem; /* Margen estético superior para ver el fondo */
   }
   .game-container{
     background:var(--white); border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12);
@@ -76,14 +77,14 @@
   /* Pantalla de Juego */
   .game-info{ 
     display:grid; 
-    grid-template-columns: auto 1fr auto; /* Grid para alinear Timer | Barra | Puntos */
+    grid-template-columns: auto 1fr auto; 
     gap:.6rem; 
     align-items:center; 
     margin-bottom:0.5rem; 
     width: 100%;
   }
   .timer{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
-  .progress-bar{ height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; width: 100%; display: flex; align-items: center;}
+  .progress-bar{ height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; width: 100%; display: flex; align-items: center; position: relative;}
   .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%); transition:width .3s ease; }
   .score-label{ font-weight:900; color:var(--blue-700); font-size:clamp(.9rem,2.3vw,1.1rem); }
   
@@ -93,26 +94,23 @@
     display: flex; 
     flex-direction: column; 
     align-items: center; 
-    justify-content: flex-start; /* Alineado arriba para no cortar la imagen en móviles pequeños */
+    justify-content: flex-start; 
     padding: 0 1rem; 
     width: 100%; 
-    overflow-y: auto; /* Permitir scroll si la imagen es muy alta en móvil */
+    overflow-y: auto; 
   }
   
-  /* Estilo del título del animal en la barra de progreso */
+  /* NUEVO: Estilo del Título del Vertebrado fuera de la barra */
   .game-subtitle { 
-    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
-    color: var(--white); 
-    font-weight: 800; 
-    position: absolute; 
-    width: 100%; 
+    font-size: clamp(1.5rem, 4vw, 2rem); /* Tamaño de título grande */
+    color: var(--blue-dark); 
+    font-weight: 900; 
+    margin-top: 1.5rem; /* Margen superior generoso para que respire */
+    margin-bottom: 0.5rem; /* Separación con la barra */
     text-align: center; 
-    top: 0; 
-    left: 0;
-    line-height: 10px; /* Para centrar verticalmente en barra de 10px */
-    pointer-events: none; 
-    z-index: 5;
-    text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
+    text-transform: uppercase; 
+    letter-spacing: 1px;
+    width: 100%;
   }
 
   /* Contenedor de imagen y selectores */
@@ -122,15 +120,14 @@
     width: 100%;
     margin: 0 auto;
     font-size: 0; 
-    /* height: auto; controlado por la imagen hija */
-    display: block; /* Cambiado de flex a block para mejor flujo en móvil */
+    display: block; 
   }
 
   .main-image {
     width: 100%;
     height: auto;
     display: block;
-    aspect-ratio: 501 / 560; /* Mantiene proporciones exactas */
+    aspect-ratio: 501 / 560; 
     transition: opacity 0.3s ease-in-out;
   }
 
@@ -236,12 +233,10 @@
 
   /* Responsive adjustments */
   @media (max-width: 500px) {
-    /* CORRECCIÓN SOLICITADA: Botón comienza mantiene ancho consistente */
     .btn { min-width: 140px; padding: .75rem 1.2rem; font-size: 1rem; } 
-    
     .advice-box { padding: 0.8rem; }
     .interaction-wrapper { max-width: 100%; }
-    .game-subtitle { font-size: 0.8rem; }
+    .game-subtitle { font-size: 1.5rem; margin-top: 1rem; } /* Ajuste móvil */
   }
 </style>
 </head>
@@ -269,19 +264,19 @@
 
   <section class="screen" id="gameScreen">
     <button class="help-btn" id="helpBtn" title="Ayuda">?</button>
-    <!-- H1 Eliminado aquí según petición -->
-    <div class="game-info">
-      <div class="timer" id="timer">00:00</div>
-      <div class="progress-bar" aria-label="Progreso">
-        <div class="progress-fill" id="progressFill"></div>
-        <div class="game-subtitle" id="animalTypeLabel">Mamífero</div>
-      </div>
-      <div class="score-label">Puntos: <span id="currentScore">0</span></div>
-    </div>
-
+    
     <div class="stage-content">
-        <!-- Etiqueta movida dentro de progress-bar -->
+        <!-- TÍTULO DEL VERTEBRADO: Movido fuera, grande y con espacio para respirar -->
+        <div class="game-subtitle" id="animalTypeLabel">Mamífero</div>
         
+        <div class="game-info">
+          <div class="timer" id="timer">00:00</div>
+          <div class="progress-bar" aria-label="Progreso">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="score-label">Puntos: <span id="currentScore">0</span></div>
+        </div>
+
         <div class="interaction-wrapper" id="interactionWrapper">
             <img class="main-image" id="animalImage" src="" alt="Animal con extremidades">
             <!-- Los hotspots se generarán dinámicamente aquí -->
@@ -375,14 +370,13 @@ const soundFiles = {
   victory:   GITHUB_EFFECTS_BASE + 'Termin%C3%A9.mp3', 
   error:     GITHUB_EFFECTS_BASE + 'Error.mp3',
   tap:       GITHUB_EFFECTS_BASE + 'Tap.mp3',
-  // Audios específicos de extremidades se cargan desde la configuración
 };
 
 /************** State & Variables **************/
 let animalsShuffled = [];
 let currentQuestionIndex = 0;
 let currentScore = 0;
-let selectedHotspots = new Set(); // IDs de los seleccionados
+let selectedHotspots = new Set(); 
 let isGameActive = false;
 let timerInt = null; 
 let elapsed = 0;
@@ -405,11 +399,9 @@ const continueBtn = el('continueBtn');
 
 function preloadSounds() {
   return new Promise((resolve) => {
-    // Cargar sonidos generales
     let loadedCount = 0;
     const generalFiles = Object.entries(soundFiles);
 
-    // Cargar sonidos específicos de las casillas
     HOTSPOTS_CONFIG.forEach(h => {
       generalFiles.push([h.id, h.audio]);
     });
@@ -443,7 +435,6 @@ function preloadSounds() {
         a.load();
         sounds[k] = a;
 
-        // Fallback 3 segundos
         setTimeout(() => {
           if (!a.dataset.loaded) checkCompletion();
         }, 3000);
@@ -533,17 +524,14 @@ function updateProgress(){
 function getCorrectAnswers(type) {
   if (type === 'Ave') return new Set(['patas', 'alas']);
   if (type === 'Pez') return new Set(['aletas']);
-  return new Set(['patas']); // Mamífero, Reptil, Anfibio
+  return new Set(['patas']); 
 }
 
-// Genera los divs selectores basados en porcentajes para mantener proporción
 function createHotspots() {
-  // Limpiamos todo excepto la imagen si ya existía
   const existingImg = interactionWrapper.querySelector('img');
   interactionWrapper.innerHTML = '';
   if(existingImg) interactionWrapper.appendChild(existingImg);
 
-  // Re-asignar referencia por seguridad
   const imgEl = el('animalImage'); 
 
   HOTSPOTS_CONFIG.forEach(conf => {
@@ -552,7 +540,6 @@ function createHotspots() {
     div.id = `hotspot-${conf.id}`;
     div.dataset.id = conf.id;
     
-    // Cálculo de porcentajes basado en 501x560
     const leftP = (conf.x / 501) * 100;
     const topP = (conf.y / 560) * 100;
     const widthP = ((conf.x2 - conf.x) / 501) * 100;
@@ -580,33 +567,27 @@ function loadQuestion(){
   isGameActive = true;
   selectedHotspots.clear();
   
-  // UI Reset
   checkBtn.style.display = 'inline-flex';
   continueBtn.style.display = 'none';
   
-  // Quitar animación de sacudida si existía
   interactionWrapper.classList.remove('shake-anim');
   
-  // Limpiar estilos de hotspots
   document.querySelectorAll('.hotspot').forEach(h => {
-    h.className = 'hotspot'; // Reset clases
+    h.className = 'hotspot'; 
   });
 
   const animal = animalsShuffled[currentQuestionIndex];
   const imgEl = document.getElementById('animalImage');
   
-  // Animación de carga de imagen
   imgEl.style.opacity = '0';
   imgEl.src = animal.url;
   imgEl.alt = `Imagen de ${animal.label}`;
   
   animalTypeLabel.textContent = animal.label;
   
-  // Restaurar opacidad después de cargar para dar efecto fade
   imgEl.onload = () => {
     imgEl.style.opacity = '1';
   };
-  // Fallback por si la imagen está cacheada
   if (imgEl.complete) {
     imgEl.style.opacity = '1';
   }
@@ -618,32 +599,29 @@ function onHotspotClick(e, id, audioUrl) {
   if (!isGameActive) return;
 
   const hotspot = e.target;
-  trackUserInteraction(false); // Track general
+  trackUserInteraction(false); 
 
   if (selectedHotspots.has(id)) {
-    // Deseleccionar
     selectedHotspots.delete(id);
     hotspot.classList.remove('selected');
-    reproducirSonidoTap(); // Sonido tap al deseleccionar
+    reproducirSonidoTap(); 
   } else {
-    // Seleccionar
     selectedHotspots.add(id);
     hotspot.classList.add('selected');
-    reproducirSonidoHotspot(id); // Sonido específico al seleccionar
+    reproducirSonidoHotspot(id); 
   }
 }
 
 function onCheckClick() {
   if (!isGameActive || selectedHotspots.size === 0) return;
   
-  trackUserInteraction(true); // Tap específico
-  isGameActive = false; // Bloquear más interacciones
+  trackUserInteraction(true); 
+  isGameActive = false; 
 
   const currentAnimal = animalsShuffled[currentQuestionIndex];
   const correctSet = getCorrectAnswers(currentAnimal.type);
   
   let isCorrect = true;
-  // Verificar que lo seleccionado coincide exactamente con lo correcto
   if (selectedHotspots.size !== correctSet.size) {
     isCorrect = false;
   } else {
@@ -655,13 +633,12 @@ function onCheckClick() {
     }
   }
 
-  // Colorear hotspots según resultado
   document.querySelectorAll('.hotspot').forEach(h => {
     const id = h.dataset.id;
     if (correctSet.has(id)) {
       h.classList.add('correct');
     } else {
-      if (selectedHotspots.has(id)) h.classList.add('incorrect'); // Seleccionó algo incorrecto
+      if (selectedHotspots.has(id)) h.classList.add('incorrect'); 
     }
   });
 
@@ -669,7 +646,6 @@ function onCheckClick() {
     reproducirSonidoCorrecto();
     currentScore += POINTS_PER_QUESTION;
     updateProgress();
-    // Continuar automáticamente después de 200ms
     setTimeout(() => {
       currentQuestionIndex++;
       loadQuestion();
@@ -677,10 +653,9 @@ function onCheckClick() {
     
   } else {
     reproducirSonidoError();
-    // UX Improvement: Activar animación de sacudida (Shake)
     interactionWrapper.classList.add('shake-anim');
     
-    pauseTimer(); // Pausar tiempo
+    pauseTimer(); 
     checkBtn.style.display = 'none';
     continueBtn.style.display = 'inline-flex';
   }
@@ -689,7 +664,7 @@ function onCheckClick() {
 function onContinueClick() {
   trackUserInteraction(true);
   currentQuestionIndex++;
-  startTimer(); // Reanudar tiempo
+  startTimer(); 
   loadQuestion();
 }
 
@@ -705,7 +680,6 @@ function startGame(){
   timerEl.textContent = '00:00';
   currentScoreEl.textContent = '0';
   
-  // Crear hotspots una vez si no existen, o asegurar estructura
   if (interactionWrapper.querySelectorAll('.hotspot').length === 0) {
     createHotspots();
   }
@@ -724,7 +698,7 @@ function finishGame(){
   el('finalScore').textContent = currentScore; 
   el('finalTime').textContent = fmtTime(elapsed);
   
-  const isPerfect = currentScore === (TOTAL_QUESTIONS * POINTS_PER_QUESTION); // 100
+  const isPerfect = currentScore === (TOTAL_QUESTIONS * POINTS_PER_QUESTION); 
   el('trophyBox').style.display = isPerfect ? 'block' : 'none';
   document.querySelector('.trophy').style.display = isPerfect ? 'block' : 'none';
   
@@ -826,7 +800,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if(e.target===el('helpModal')) el('helpModal').style.display='none'; 
     });
 
-    // Precarga de imágenes
     ANIMALS_DATA.forEach(animal => {
         const img = new Image();
         img.src = animal.url;
