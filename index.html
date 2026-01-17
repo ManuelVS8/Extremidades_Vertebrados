@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>¿Cómo se desplazan los animales vertebrados?</title>
+<!-- Favicon solicitado -->
+<link rel="icon" href="https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/icono.ico" type="image/x-icon">
+<style>
+  /* ====== Reset & base ====== */
+  * { box-sizing: border-box; margin:0; padding:0; }
+  :root{
+    --blue:#001DFF;
+    --blue-dark:#04032B; /* Color Oscuro para Títulos */
+    --blue-700:#1a3a5f;
+    --blue-600:#254fba;
+    --orange:#f59e42; /* Botón Volver al menú / Acento */
+    --orange-700:#e67e22;
+    --bg-grad-1:#1a3a5f;
+    --bg-grad-2:#0d2340;
+    --white:#ffffff;
+    --green:#2ecc71; /* Correcto */
+    --green-dark:#27ae60;
+    --red:#e74c3c; /* Incorrecto */
+    --red-dark:#c0392b;
+    --panel:#E8EAFF;
+  }
+  body{
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, var(--bg-grad-1) 0%, var(--bg-grad-2) 100%);
+    min-height:100vh; display:flex; justify-content:center; align-items:center; color:#333; padding:10px;
+  }
+  .game-container{
+    background:var(--white); border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12);
+    padding:1.2rem; max-width:800px; width:100%; min-height:640px; position:relative; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  header{ text-align:center; margin-bottom:0.5rem; margin-top:1rem; } /* Ajustado margin */
+  h1{ color:var(--blue-dark); font-size:clamp(1.6rem,4.5vw,2.5rem); font-weight:900; letter-spacing:.5px; display:none; /* Oculto en juego */ }
+  
+  /* Título visible solo en pantallas de inicio y final */
+  .screen:not(#gameScreen) h1 { display: block; }
+
+  .subtitle{ color:var(--blue-700); font-size:clamp(0.9rem,3vw,1.15rem); margin-top:.25rem; }
+  .highlight-keyword{ color:var(--orange); font-weight:800; }
+  .highlight-green{ color:var(--green); font-weight:800; }
+  .highlight-red{ color:var(--red); font-weight:800; }
+
+  /* Botones generales */
+  .btn{ color:#fff; border:none; padding:.75rem 1.2rem; border-radius:10px; cursor:pointer; font-weight:800;
+        transition:transform .08s ease, box-shadow .2s ease, background-color .25s ease; min-width:140px; height:48px;
+        display:inline-flex; align-items:center; justify-content:center; font-size: 1rem; }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 14px rgba(0,0,0,.12); }
+  .btn:active{ transform:translateY(0); }
+  .btn-primary{ background:var(--orange); }
+  .btn-primary:hover{ background:var(--orange-700); }
+  
+  /* CORRECCIÓN SOLICITADA: Hover específico para el botón azul para mejorar visibilidad */
+  .btn-blue { background:var(--blue-600); }
+  .btn-blue:hover { background:#1a3a5f; } /* Color más oscuro definido y visible */
+
+  .btn-ghost{ background:#e6f2ff; color:var(--blue-700); }
+  .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
+
+  .screen{ display:none; animation:fadeIn .35s ease; flex:1; flex-direction:column; }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(12px);} to{opacity:1; transform:translateY(0);} }
+
+  /* Pantalla de Inicio */
+  .start-content{ display:flex; flex-direction:column; justify-content:center; align-items:center; flex:1; gap:1rem; padding:1rem; }
+  .advice-box{ background:var(--panel); border-left:4px solid var(--blue-700); padding:1rem 1.2rem; border-radius:12px;
+               color:var(--blue-700); max-width:680px; text-align:center; font-size:clamp(0.9rem,2.5vw,1.1rem); line-height:1.5;}
+  .start-image{ max-width: 300px; width: 100%; margin: 2rem auto 0; display: block; }
+  .advice-box strong { display: block; margin-top: 0.8rem; text-align: center; font-size: 1.1em; font-weight: 900;}
+
+  /* Pantalla de Juego */
+  .game-info{ display:flex; gap:.6rem; align-items:center; justify-content:space-between; margin-bottom:0.5rem; flex-wrap:wrap; padding: 0 0.5rem;}
+  .timer{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
+  .progress-bar{ flex:1; height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; margin: 0 1rem; }
+  .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%); transition:width .3s ease; }
+  .score-label{ font-weight:900; color:var(--blue-700); font-size:clamp(.9rem,2.3vw,1.1rem); }
+  
+  .stage-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 1rem; width: 100%; }
+  
+  .game-subtitle { 
+    font-size: 1.5rem; color: var(--blue-dark); font-weight: 900; margin-bottom: 0.5rem; 
+    text-align: center; text-transform: uppercase; letter-spacing: 1px;
+  }
+
+  /* Contenedor de imagen y selectores */
+  .interaction-wrapper {
+    position: relative;
+    max-width: 501px;
+    width: 100%;
+    margin: 0 auto;
+    font-size: 0; /* Eliminar espacio extra */
+    flex-grow: 1; /* Ocupar el espacio disponible */
+    display: flex;
+    align-items: center; /* Centrar verticalmente la imagen en el contenedor */
+  }
+
+  .main-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    aspect-ratio: 501 / 560; 
+    transition: opacity 0.3s ease-in-out; /* Animación suave de carga */
+  }
+
+  .hotspot {
+    position: absolute;
+    border: 6px solid black; /* Borde más ancho solicitado */
+    background-color: transparent;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.2s ease;
+    border-radius: 4px; 
+  }
+  
+  /* Feedback Visual "Hover" - UX Improvement */
+  .hotspot:hover {
+    transform: scale(1.05); /* Escala ligera */
+    z-index: 11;
+    border-color: var(--orange-700); /* Cambio de color borde */
+    box-shadow: 0 0 15px rgba(245, 158, 66, 0.4); /* Resplandor sutil */
+  }
+
+  /* Animación de "Sacudida" (Shake) - UX Improvement */
+  @keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+  }
+
+  .shake-anim {
+    animation: shake 0.5s;
+  }
+
+  /* Estados de selección */
+  .hotspot.selected {
+    border-color: var(--orange);
+    background-color: rgba(245, 158, 66, 0.4); /* Fondo naranja transparente solicitado */
+    box-shadow: 0 0 10px var(--orange);
+  }
+
+  .hotspot.correct {
+    border-color: var(--green) !important;
+    background-color: rgba(46, 204, 113, 0.4) !important; /* Fondo verde semitransparente */
+    box-shadow: 0 0 10px var(--green);
+  }
+
+  .hotspot.incorrect {
+    border-color: var(--red) !important;
+    background-color: rgba(231, 76, 60, 0.4) !important; /* Fondo rojo semitransparente */
+    box-shadow: 0 0 10px var(--red);
+  }
+
+  /* Botones de acción en juego */
+  .game-actions {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    min-height: 50px; 
+  }
+
+  /* Botón de Mute */
+  .mute-btn{ position:absolute; top:.8rem; right:4.5rem; background:var(--orange); color:#fff; border:2px solid #fff; width:38px; height:38px; border-radius:50%; cursor:pointer; font-size:1rem; display:flex; align-items:center; justify-content:center; z-index:20; }
+  .mute-btn:hover{ background:var(--orange-700); }
+  .help-btn{ position:absolute; top:.8rem; right:.8rem; width:38px; height:38px; border-radius:50%; border:none; background:#9c27b0; color:#fff; font-weight:800; cursor:pointer; z-index:20; }
+
+  /* Pantalla Final */
+  .results{ display:flex; flex-direction:column; align-items:center; gap:.6rem; text-align:center; flex:1; justify-content:center; }
+  .final-title{ color:var(--blue-dark); font-weight:900; }
+  .big-score{ font-size:clamp(2.2rem,6vw,3.4rem); color:var(--blue-600); font-weight:900; margin-top: -0.2rem; }
+  .score-title{ font-size:1.0rem; color:var(--blue-700); margin-top:1rem; }
+  .final-time{ color:var(--blue-700); }
+  .trophy{ font-size:clamp(4rem,10vw,6rem); margin:.2rem 0; color:var(--orange); animation:bounce 1s ease infinite; display:none;}
+  @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+  .credit{ color:var(--blue-700); margin-top:1rem; }
+  #finalMsg { font-size: clamp(1.6rem, 3.8vw, 2.4rem); font-weight: 800; color: var(--blue-700); margin-top: 0.6rem; }
+  .school-logo { display: block; width: 160px; max-width: 40%; height: auto; margin-top: 0.8rem; border-radius: 8px; object-fit: contain; }
+  .school-logo:not([src]){ display:none; }
+
+  /* Loading & Confetti */
+  .confetti{ position:fixed; width:10px; height:10px; border-radius:50%; animation: confetti-fall 3s linear forwards; z-index:999; }
+  @keyframes confetti-fall{ 0%{ transform:translate(0, -20px) rotate(0); opacity:1;} 100%{ transform:translate(var(--tx), var(--ty)) rotate(360deg); opacity:0; } }
+  .loading-indicator {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7); display: none; justify-content: center;
+    align-items: center; z-index: 1000; flex-direction: column;
+  }
+  .loading-spinner {
+    width: 50px; height: 50px; border: 5px solid #f3f3f3;
+    border-top: 5px solid var(--orange); border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 20px;
+  }
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  .loading-text { color: white; font-size: 1.2rem; text-align: center; }
+
+  /* Responsive adjustments */
+  @media (max-width: 500px) {
+    .btn { min-width: 100%; padding: .6rem; font-size: 0.9rem; }
+    .advice-box { padding: 0.8rem; }
+    .interaction-wrapper { max-width: 100%; }
+    .game-subtitle { font-size: 1.2rem; }
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <button class="mute-btn" id="muteBtn" title="Silenciar/Activar sonido">🔊</button>
+
+  <section class="screen active" id="startScreen" aria-labelledby="title-start">
+    <header>
+      <h1 id="title-start">¿Cómo se desplazan los animales vertebrados?</h1>
+      <div class="subtitle">En este juego aprenderás cómo se desplazan los vertebrados y cuáles son sus extremidades.</div>
+    </header>
+    <div class="start-content">
+      <div class="advice-box" role="note" aria-live="polite">
+        <span class="advice-text">
+            <span class="highlight-keyword">Consejo</span>: Los animales vertebrados se desplazan usando sus extremidades: los mamíferos, reptiles y anfibios usan <span class="highlight-keyword">patas</span>; las aves, <span class="highlight-keyword">patas</span> y <span class="highlight-keyword">alas</span>; y los peces, <span class="highlight-keyword">aletas</span>.
+        </span>
+        <strong>¡Ánimo!</strong>
+      </div>
+      <button class="btn btn-primary" id="playBtn">Comenzar</button>
+      <img class="start-image" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Ni%C3%B1os.png" alt="Niños aprendiendo">
+    </div>
+  </section>
+
+  <section class="screen" id="gameScreen">
+    <button class="help-btn" id="helpBtn" title="Ayuda">?</button>
+    <!-- H1 Eliminado aquí según petición -->
+    <div class="game-info">
+      <div class="timer" id="timer">00:00</div>
+      <div class="progress-bar" aria-label="Progreso"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="score-label">Puntos: <span id="currentScore">0</span></div>
+    </div>
+
+    <div class="stage-content">
+        <!-- Etiqueta del tipo de animal ahora funciona como título de la actividad -->
+        <div class="game-subtitle" id="animalTypeLabel">Mamífero</div>
+        
+        <div class="interaction-wrapper" id="interactionWrapper">
+            <img class="main-image" id="animalImage" src="" alt="Animal con extremidades">
+            <!-- Los hotspots se generarán dinámicamente aquí -->
+        </div>
+
+        <div class="game-actions">
+            <button class="btn btn-primary" id="checkBtn">Comprobar</button>
+            <button class="btn btn-blue" id="continueBtn" style="display:none;">Continuar</button>
+        </div>
+    </div>
+  </section>
+
+  <section class="screen" id="resultsScreen">
+    <header>
+      <h1 class="final-title">¿Cómo se desplazan los vertebrados?</h1>
+    </header>
+    <div class="results">
+      <div id="trophyBox">
+        <div class="trophy">🏆</div>
+      </div>
+      <div class="score-title">Puntuación:</div>
+      <div class="big-score" id="finalScore">0</div>
+      <div class="final-time">Tiempo: <span id="finalTime">00:00</span></div>
+      <div id="finalMsg" class="subtitle"></div>
+      <button class="btn btn-primary" id="backToMenuBtn">Volver al menú</button>
+      <span class="credit">Creado por Manuel J. Ventura</span>
+      <img class="school-logo" src="https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/Siurot.png" alt="Logo del colegio" />
+    </div>
+  </section>
+</div>
+
+<div id="helpModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:100; justify-content:center; align-items:center; padding:1rem;">
+  <div style="background:#fff; border-radius:12px; max-width:680px; width:100%; padding:1.2rem 1.2rem; box-shadow:0 10px 24px rgba(0,0,0,.2);">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #eee; padding-bottom:.5rem; margin-bottom:.8rem;">
+      <h3 style="color:var(--blue-700);">Ayuda</h3>
+      <button class="btn-ghost" id="closeHelp" style="border-radius:8px; padding:.4rem .7rem; height:auto; min-width:auto;">Cerrar</button>
+    </div>
+    <div style="line-height:1.55; color:#333;">
+      <p><strong>Selecciona</strong> las casillas (patas, alas, aletas) que correspondan al animal mostrado.</p>
+      <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+        <li><strong>Mamíferos, Reptiles, Anfibios:</strong> Solo patas.</li>
+        <li><strong>Aves:</strong> Patas y Alas.</li>
+        <li><strong>Peces:</strong> Solo Aletas.</li>
+      </ul>
+      <p style="margin-top:0.8rem;">Pulsa <strong>Comprobar</strong> para verificar tu respuesta.</p>
+    </div>
+  </div>
+</div>
+
+<div class="loading-indicator" id="loadingIndicator">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Cargando audios y efectos...</div>
+</div>
+
+<script>
+/************** Data **************/
+const ANIMALS_DATA = [
+  // Mamíferos
+  { type: 'Mamífero', label: 'Mamífero', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/patas2.png' },
+  { type: 'Mamífero', label: 'Mamífero', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/patas5.png' },
+  // Aves
+  { type: 'Ave', label: 'Ave', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/pata%20y%20alas1.png' },
+  { type: 'Ave', label: 'Ave', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/pata%20y%20alas2.png' },
+  { type: 'Ave', label: 'Ave', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/pata%20y%20alas4.png' },
+  // Reptiles
+  { type: 'Reptil', label: 'Reptil', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/patas1.png' },
+  // Anfibios
+  { type: 'Anfibio', label: 'Anfibio', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/patas3.png' },
+  // Peces
+  { type: 'Pez', label: 'Pez', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/aletas4.png' },
+  { type: 'Pez', label: 'Pez', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/aletas3.png' },
+  { type: 'Pez', label: 'Pez', url: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/refs/heads/main/Animales_y_Plantas/aletas1.png' }
+];
+
+// Coordenadas de los cuadros (origen 501x560)
+const HOTSPOTS_CONFIG = [
+  { id: 'patas', x: 5, y: 405, x2: 155, y2: 555, audio: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/main/Animales_y_Plantas/Patas.mp3' },
+  { id: 'alas',  x: 177, y: 405, x2: 326, y2: 555, audio: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/main/Animales_y_Plantas/Alas.mp3' },
+  { id: 'aletas', x: 345, y: 405, x2: 495, y2: 555, audio: 'https://raw.githubusercontent.com/ManuelVS8/Audios-juegos-SCIENCE/main/Animales_y_Plantas/Aletas.mp3' }
+];
+
+const TOTAL_QUESTIONS = ANIMALS_DATA.length;
+const POINTS_PER_QUESTION = 10;
+const DELAY_CORRECT = 200;
+
+// Enlaces de audio
+const GITHUB_EFFECTS_BASE = 'https://raw.githubusercontent.com/ManuelVS8/Efectos_audio/refs/heads/main/';
+const soundFiles = {
+  completed: GITHUB_EFFECTS_BASE + 'Completado.mp3',
+  correct:   GITHUB_EFFECTS_BASE + 'Correcto.mp3',
+  victory:   GITHUB_EFFECTS_BASE + 'Termin%C3%A9.mp3', 
+  error:     GITHUB_EFFECTS_BASE + 'Error.mp3',
+  tap:       GITHUB_EFFECTS_BASE + 'Tap.mp3',
+  // Audios específicos de extremidades se cargan desde la configuración
+};
+
+/************** State & Variables **************/
+let animalsShuffled = [];
+let currentQuestionIndex = 0;
+let currentScore = 0;
+let selectedHotspots = new Set(); // IDs de los seleccionados
+let isGameActive = false;
+let timerInt = null; 
+let elapsed = 0;
+let isMuted = false;
+let audioUnlocked = false; 
+
+const sounds = {};
+const el = (id) => document.getElementById(id);
+
+const progressFill = el('progressFill');
+const timerEl = el('timer');
+const currentScoreEl = el('currentScore');
+const animalImage = el('animalImage');
+const interactionWrapper = el('interactionWrapper');
+const animalTypeLabel = el('animalTypeLabel');
+const checkBtn = el('checkBtn');
+const continueBtn = el('continueBtn');
+
+/************** Sound Functions **************/
+
+function preloadSounds() {
+  return new Promise((resolve) => {
+    // Cargar sonidos generales
+    let loadedCount = 0;
+    const generalFiles = Object.entries(soundFiles);
+
+    // Cargar sonidos específicos de las casillas
+    HOTSPOTS_CONFIG.forEach(h => {
+      generalFiles.push([h.id, h.audio]);
+    });
+
+    const totalToLoad = generalFiles.length;
+
+    if (totalToLoad === 0) {
+      resolve();
+      return;
+    }
+
+    generalFiles.forEach(([k, url])=>{
+      try {
+        const a = new Audio();
+        a.src = url;
+        a.preload = 'auto';
+        a.crossOrigin = 'anonymous'; 
+        
+        const checkCompletion = () => {
+           if (a.dataset.loaded) return; 
+           a.dataset.loaded = true;
+           loadedCount++;
+           if (loadedCount === totalToLoad) {
+             resolve();
+           }
+        };
+
+        a.addEventListener('canplaythrough', checkCompletion, { once: true });
+        a.addEventListener('loadedmetadata', checkCompletion, { once: true });
+        a.addEventListener('error', checkCompletion, { once: true });
+        a.load();
+        sounds[k] = a;
+
+        // Fallback 3 segundos
+        setTimeout(() => {
+          if (!a.dataset.loaded) checkCompletion();
+        }, 3000);
+
+      } catch(e) {
+        loadedCount++;
+        if (loadedCount === totalToLoad) resolve();
+      }
+    });
+  });
+}
+
+function unlockAudio(){
+  if (audioUnlocked) return;
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g);
+    g.connect(ctx.destination);
+    g.gain.value = 0.0001;
+    o.start();
+    o.stop(ctx.currentTime + 0.02);
+    audioUnlocked = true;
+  } catch(e){
+    audioUnlocked = true; 
+  }
+}
+
+function play(name){
+  if(isMuted) return;
+  const a = sounds[name];
+  if(!a) return;
+  try{
+    const clone = a.cloneNode(); 
+    clone.currentTime = 0;
+    const p = clone.play();
+    if (p && p.catch) p.catch(() => {});
+  } catch(e){}
+}
+
+function reproducirSonidoCorrecto(){ play('correct'); }
+function reproducirSonidoError(){ play('error'); }
+function reproducirSonidoCompletado(){ play('completed'); }
+function reproducirSonidoVictoria(){ play('victory'); }
+function reproducirSonidoTap(){ play('tap'); }
+function reproducirSonidoHotspot(id){ play(id); }
+
+let userInteracted = false;
+function trackUserInteraction(isTap = false) {
+  if (!userInteracted) {
+    userInteracted = true;
+    unlockAudio();
+    if(sounds.tap) {
+        try {
+            sounds.tap.volume = 0;
+            const playPromise = sounds.tap.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    sounds.tap.pause();
+                    sounds.tap.volume = 1;
+                    sounds.tap.currentTime = 0;
+                }).catch(() => {
+                    sounds.tap.volume = 1;
+                });
+            }
+        } catch(e) {}
+    }
+  }
+  if (isTap) reproducirSonidoTap();
+}
+
+/************** Game Logic Helpers **************/
+function fmtTime(s){ const m=Math.floor(s/60).toString().padStart(2,'0'); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`; }
+function startTimer(){ clearInterval(timerInt); timerInt = setInterval(()=>{ elapsed++; timerEl.textContent = fmtTime(elapsed); },1000); }
+function pauseTimer(){ clearInterval(timerInt); }
+function stopTimer(){ clearInterval(timerInt); }
+
+function shuffle(a){ const arr=[...a]; for(let i=arr.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+function updateProgress(){ 
+  const progress = (currentQuestionIndex / TOTAL_QUESTIONS) * 100;
+  progressFill.style.width = progress + '%'; 
+  currentScoreEl.textContent = currentScore;
+}
+
+function getCorrectAnswers(type) {
+  if (type === 'Ave') return new Set(['patas', 'alas']);
+  if (type === 'Pez') return new Set(['aletas']);
+  return new Set(['patas']); // Mamífero, Reptil, Anfibio
+}
+
+// Genera los divs selectores basados en porcentajes para mantener proporción
+function createHotspots() {
+  // Limpiamos todo excepto la imagen si ya existía
+  const existingImg = interactionWrapper.querySelector('img');
+  interactionWrapper.innerHTML = '';
+  if(existingImg) interactionWrapper.appendChild(existingImg);
+
+  // Re-asignar referencia por seguridad
+  const imgEl = el('animalImage'); 
+
+  HOTSPOTS_CONFIG.forEach(conf => {
+    const div = document.createElement('div');
+    div.className = 'hotspot';
+    div.id = `hotspot-${conf.id}`;
+    div.dataset.id = conf.id;
+    
+    // Cálculo de porcentajes basado en 501x560
+    const leftP = (conf.x / 501) * 100;
+    const topP = (conf.y / 560) * 100;
+    const widthP = ((conf.x2 - conf.x) / 501) * 100;
+    const heightP = ((conf.y2 - conf.y) / 560) * 100;
+
+    div.style.left = `${leftP}%`;
+    div.style.top = `${topP}%`;
+    div.style.width = `${widthP}%`;
+    div.style.height = `${heightP}%`;
+
+    div.addEventListener('click', (e) => onHotspotClick(e, conf.id, conf.audio));
+    
+    interactionWrapper.appendChild(div);
+  });
+}
+
+/************** Game Flow **************/
+
+function loadQuestion(){
+  if (currentQuestionIndex >= TOTAL_QUESTIONS) {
+    finishGame();
+    return;
+  }
+  
+  isGameActive = true;
+  selectedHotspots.clear();
+  
+  // UI Reset
+  checkBtn.style.display = 'inline-flex';
+  continueBtn.style.display = 'none';
+  
+  // Quitar animación de sacudida si existía
+  interactionWrapper.classList.remove('shake-anim');
+  
+  // Limpiar estilos de hotspots
+  document.querySelectorAll('.hotspot').forEach(h => {
+    h.className = 'hotspot'; // Reset clases
+  });
+
+  const animal = animalsShuffled[currentQuestionIndex];
+  const imgEl = document.getElementById('animalImage');
+  
+  // Animación de carga de imagen
+  imgEl.style.opacity = '0';
+  imgEl.src = animal.url;
+  imgEl.alt = `Imagen de ${animal.label}`;
+  
+  animalTypeLabel.textContent = animal.label;
+  
+  // Restaurar opacidad después de cargar para dar efecto fade
+  imgEl.onload = () => {
+    imgEl.style.opacity = '1';
+  };
+  // Fallback por si la imagen está cacheada
+  if (imgEl.complete) {
+    imgEl.style.opacity = '1';
+  }
+  
+  updateProgress();
+}
+
+function onHotspotClick(e, id, audioUrl) {
+  if (!isGameActive) return;
+
+  const hotspot = e.target;
+  trackUserInteraction(false); // Track general
+
+  if (selectedHotspots.has(id)) {
+    // Deseleccionar
+    selectedHotspots.delete(id);
+    hotspot.classList.remove('selected');
+    reproducirSonidoTap(); // Sonido tap al deseleccionar
+  } else {
+    // Seleccionar
+    selectedHotspots.add(id);
+    hotspot.classList.add('selected');
+    reproducirSonidoHotspot(id); // Sonido específico al seleccionar
+  }
+}
+
+function onCheckClick() {
+  if (!isGameActive || selectedHotspots.size === 0) return;
+  
+  trackUserInteraction(true); // Tap específico
+  isGameActive = false; // Bloquear más interacciones
+
+  const currentAnimal = animalsShuffled[currentQuestionIndex];
+  const correctSet = getCorrectAnswers(currentAnimal.type);
+  
+  let isCorrect = true;
+  // Verificar que lo seleccionado coincide exactamente con lo correcto
+  if (selectedHotspots.size !== correctSet.size) {
+    isCorrect = false;
+  } else {
+    for (let item of selectedHotspots) {
+      if (!correctSet.has(item)) {
+        isCorrect = false;
+        break;
+      }
+    }
+  }
+
+  // Colorear hotspots según resultado
+  document.querySelectorAll('.hotspot').forEach(h => {
+    const id = h.dataset.id;
+    if (correctSet.has(id)) {
+      h.classList.add('correct');
+    } else {
+      if (selectedHotspots.has(id)) h.classList.add('incorrect'); // Seleccionó algo incorrecto
+    }
+  });
+
+  if (isCorrect) {
+    reproducirSonidoCorrecto();
+    currentScore += POINTS_PER_QUESTION;
+    updateProgress();
+    // Continuar automáticamente después de 200ms
+    setTimeout(() => {
+      currentQuestionIndex++;
+      loadQuestion();
+    }, DELAY_CORRECT);
+    
+  } else {
+    reproducirSonidoError();
+    // UX Improvement: Activar animación de sacudida (Shake)
+    interactionWrapper.classList.add('shake-anim');
+    
+    pauseTimer(); // Pausar tiempo
+    checkBtn.style.display = 'none';
+    continueBtn.style.display = 'inline-flex';
+  }
+}
+
+function onContinueClick() {
+  trackUserInteraction(true);
+  currentQuestionIndex++;
+  startTimer(); // Reanudar tiempo
+  loadQuestion();
+}
+
+function startGame(){
+  el('startScreen').classList.remove('active');
+  el('gameScreen').classList.add('active');
+  
+  animalsShuffled = shuffle(ANIMALS_DATA);
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  elapsed = 0;
+  
+  timerEl.textContent = '00:00';
+  currentScoreEl.textContent = '0';
+  
+  // Crear hotspots una vez si no existen, o asegurar estructura
+  if (interactionWrapper.querySelectorAll('.hotspot').length === 0) {
+    createHotspots();
+  }
+  
+  startTimer();
+  loadQuestion();
+}
+
+function finishGame(){ 
+  stopTimer(); 
+  isGameActive = false;
+  
+  el('gameScreen').classList.remove('active'); 
+  el('resultsScreen').classList.add('active');
+  
+  el('finalScore').textContent = currentScore; 
+  el('finalTime').textContent = fmtTime(elapsed);
+  
+  const isPerfect = currentScore === (TOTAL_QUESTIONS * POINTS_PER_QUESTION); // 100
+  el('trophyBox').style.display = isPerfect ? 'block' : 'none';
+  document.querySelector('.trophy').style.display = isPerfect ? 'block' : 'none';
+  
+  const msg = isPerfect ? '¡Enhorabuena, puntuación máxima!' : '¡Buen trabajo! Sigue practicando';
+  el('finalMsg').textContent = msg;
+  
+  if(isPerfect){ 
+    reproducirSonidoVictoria(); 
+    spawnConfetti(); 
+  } else { 
+    reproducirSonidoCompletado(); 
+  }
+  updateProgress(); 
+}
+
+function gotoStart(){
+  el('resultsScreen').classList.remove('active'); 
+  el('gameScreen').classList.remove('active'); 
+  el('startScreen').classList.add('active');
+  
+  animalsShuffled = [];
+  currentQuestionIndex = 0;
+  currentScore = 0;
+  elapsed = 0;
+  timerEl.textContent = '00:00';
+  progressFill.style.width = '0%';
+  currentScoreEl.textContent = '0';
+  isGameActive = false;
+}
+
+/************** Efectos Visuales **************/
+
+function spawnConfetti(){
+  for(let i=0;i<120;i++){
+    setTimeout(()=>{
+      const c=document.createElement('div');
+      c.className='confetti';
+      const x=Math.random()*window.innerWidth;
+      const ty=window.innerHeight+20;
+      const tx=(Math.random()-.5)*160;
+      const colors=['#ff595e','#1982c4','#6a4c93','#ffca3a','#8ac926','#ff924c','#00c2ff'];
+      c.style.left=x+'px';
+      c.style.top='-10px';
+      c.style.backgroundColor=colors[Math.floor(Math.random()*colors.length)];
+      const size=6+Math.random()*8;
+      c.style.width=size+'px';
+      c.style.height=size+'px';
+      c.style.setProperty('--tx', tx+'px');
+      c.style.setProperty('--ty', ty+'px');
+      document.body.appendChild(c);
+      setTimeout(()=>c.remove(), 3200);
+    }, i*18);
+  }
+}
+
+/************** Event Listeners **************/
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const loadingIndicator = el('loadingIndicator');
+    loadingIndicator.style.display = 'flex';
+    loadingIndicator.querySelector('.loading-text').textContent = "Cargando audios y efectos...";
+
+    await preloadSounds(); 
+
+    loadingIndicator.style.display = 'none';
+
+    document.addEventListener('click', () => trackUserInteraction(false), { once: false });
+    document.addEventListener('touchstart', () => trackUserInteraction(false), { once: false });
+    document.addEventListener('keydown', () => trackUserInteraction(false), { once: false });
+
+    el('playBtn').addEventListener('click', (e)=>{
+      trackUserInteraction(true);
+      startGame();
+    });
+
+    el('backToMenuBtn').addEventListener('click', ()=>{
+      trackUserInteraction(true);
+      gotoStart();
+    });
+
+    checkBtn.addEventListener('click', onCheckClick);
+    continueBtn.addEventListener('click', onContinueClick);
+    
+    el('muteBtn').addEventListener('click', ()=>{
+      trackUserInteraction(false);
+      isMuted = !isMuted;
+      el('muteBtn').textContent = isMuted ? '🔇' : '🔊';
+    });
+
+    el('helpBtn').addEventListener('click', ()=>{ 
+      trackUserInteraction(true);
+      el('helpModal').style.display='flex'; 
+    });
+    el('closeHelp').addEventListener('click', ()=>{ 
+      trackUserInteraction(true);
+      el('helpModal').style.display='none'; 
+    });
+    el('helpModal').addEventListener('click', (e)=>{ 
+      if(e.target===el('helpModal')) el('helpModal').style.display='none'; 
+    });
+
+    // Precarga de imágenes
+    ANIMALS_DATA.forEach(animal => {
+        const img = new Image();
+        img.src = animal.url;
+    });
+});
+</script>
+</body>
+</html>
