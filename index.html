@@ -35,8 +35,8 @@
     padding:1.2rem; max-width:800px; width:100%; min-height:640px; position:relative; overflow:hidden;
     display:flex; flex-direction:column;
   }
-  header{ text-align:center; margin-bottom:0.5rem; margin-top:1rem; } /* Ajustado margin */
-  h1{ color:var(--blue-dark); font-size:clamp(1.6rem,4.5vw,2.5rem); font-weight:900; letter-spacing:.5px; display:none; /* Oculto en juego */ }
+  header{ text-align:center; margin-bottom:0.5rem; margin-top:1rem; }
+  h1{ color:var(--blue-dark); font-size:clamp(1.6rem,4.5vw,2.5rem); font-weight:900; letter-spacing:.5px; display:none; }
   
   /* Título visible solo en pantallas de inicio y final */
   .screen:not(#gameScreen) h1 { display: block; }
@@ -55,9 +55,9 @@
   .btn-primary{ background:var(--orange); }
   .btn-primary:hover{ background:var(--orange-700); }
   
-  /* CORRECCIÓN SOLICITADA: Hover específico para el botón azul para mejorar visibilidad */
+  /* CORRECCIÓN SOLICITADA: Hover específico para el botón azul */
   .btn-blue { background:var(--blue-600); }
-  .btn-blue:hover { background:#1a3a5f; } /* Color más oscuro definido y visible */
+  .btn-blue:hover { background:#1a3a5f; } 
 
   .btn-ghost{ background:#e6f2ff; color:var(--blue-700); }
   .btn:disabled{ opacity:.6; cursor:not-allowed; transform:none !important; box-shadow:none !important; }
@@ -74,17 +74,45 @@
   .advice-box strong { display: block; margin-top: 0.8rem; text-align: center; font-size: 1.1em; font-weight: 900;}
 
   /* Pantalla de Juego */
-  .game-info{ display:flex; gap:.6rem; align-items:center; justify-content:space-between; margin-bottom:0.5rem; flex-wrap:wrap; padding: 0 0.5rem;}
+  .game-info{ 
+    display:grid; 
+    grid-template-columns: auto 1fr auto; /* Grid para alinear Timer | Barra | Puntos */
+    gap:.6rem; 
+    align-items:center; 
+    margin-bottom:0.5rem; 
+    width: 100%;
+  }
   .timer{ font-weight:900; color:var(--blue-700); font-size:clamp(.95rem,2.3vw,1.15rem); }
-  .progress-bar{ flex:1; height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; margin: 0 1rem; }
+  .progress-bar{ height:10px; background:#e6f2ff; border-radius:999px; overflow:hidden; width: 100%; display: flex; align-items: center;}
   .progress-fill{ height:100%; width:0%; background:linear-gradient(90deg, var(--orange) 0%, var(--orange-700) 100%); transition:width .3s ease; }
   .score-label{ font-weight:900; color:var(--blue-700); font-size:clamp(.9rem,2.3vw,1.1rem); }
   
-  .stage-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 1rem; width: 100%; }
+  /* CORRECCIÓN CRÍTICA MÓVILES: Permitir flujo natural sin altura forzada */
+  .stage-content { 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: flex-start; /* Alineado arriba para no cortar la imagen en móviles pequeños */
+    padding: 0 1rem; 
+    width: 100%; 
+    overflow-y: auto; /* Permitir scroll si la imagen es muy alta en móvil */
+  }
   
+  /* Estilo del título del animal en la barra de progreso */
   .game-subtitle { 
-    font-size: 1.5rem; color: var(--blue-dark); font-weight: 900; margin-bottom: 0.5rem; 
-    text-align: center; text-transform: uppercase; letter-spacing: 1px;
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    color: var(--white); 
+    font-weight: 800; 
+    position: absolute; 
+    width: 100%; 
+    text-align: center; 
+    top: 0; 
+    left: 0;
+    line-height: 10px; /* Para centrar verticalmente en barra de 10px */
+    pointer-events: none; 
+    z-index: 5;
+    text-shadow: 0px 1px 2px rgba(0,0,0,0.5);
   }
 
   /* Contenedor de imagen y selectores */
@@ -93,23 +121,22 @@
     max-width: 501px;
     width: 100%;
     margin: 0 auto;
-    font-size: 0; /* Eliminar espacio extra */
-    flex-grow: 1; /* Ocupar el espacio disponible */
-    display: flex;
-    align-items: center; /* Centrar verticalmente la imagen en el contenedor */
+    font-size: 0; 
+    /* height: auto; controlado por la imagen hija */
+    display: block; /* Cambiado de flex a block para mejor flujo en móvil */
   }
 
   .main-image {
     width: 100%;
     height: auto;
     display: block;
-    aspect-ratio: 501 / 560; 
-    transition: opacity 0.3s ease-in-out; /* Animación suave de carga */
+    aspect-ratio: 501 / 560; /* Mantiene proporciones exactas */
+    transition: opacity 0.3s ease-in-out;
   }
 
   .hotspot {
     position: absolute;
-    border: 6px solid black; /* Borde más ancho solicitado */
+    border: 6px solid black;
     background-color: transparent;
     cursor: pointer;
     z-index: 10;
@@ -117,15 +144,15 @@
     border-radius: 4px; 
   }
   
-  /* Feedback Visual "Hover" - UX Improvement */
+  /* Feedback Visual "Hover" */
   .hotspot:hover {
-    transform: scale(1.05); /* Escala ligera */
+    transform: scale(1.05); 
     z-index: 11;
-    border-color: var(--orange-700); /* Cambio de color borde */
-    box-shadow: 0 0 15px rgba(245, 158, 66, 0.4); /* Resplandor sutil */
+    border-color: var(--orange-700); 
+    box-shadow: 0 0 15px rgba(245, 158, 66, 0.4); 
   }
 
-  /* Animación de "Sacudida" (Shake) - UX Improvement */
+  /* Animación de "Sacudida" (Shake) */
   @keyframes shake {
     0% { transform: translate(1px, 1px) rotate(0deg); }
     10% { transform: translate(-1px, -2px) rotate(-1deg); }
@@ -147,19 +174,19 @@
   /* Estados de selección */
   .hotspot.selected {
     border-color: var(--orange);
-    background-color: rgba(245, 158, 66, 0.4); /* Fondo naranja transparente solicitado */
+    background-color: rgba(245, 158, 66, 0.4); 
     box-shadow: 0 0 10px var(--orange);
   }
 
   .hotspot.correct {
     border-color: var(--green) !important;
-    background-color: rgba(46, 204, 113, 0.4) !important; /* Fondo verde semitransparente */
+    background-color: rgba(46, 204, 113, 0.4) !important; 
     box-shadow: 0 0 10px var(--green);
   }
 
   .hotspot.incorrect {
     border-color: var(--red) !important;
-    background-color: rgba(231, 76, 60, 0.4) !important; /* Fondo rojo semitransparente */
+    background-color: rgba(231, 76, 60, 0.4) !important; 
     box-shadow: 0 0 10px var(--red);
   }
 
@@ -209,10 +236,12 @@
 
   /* Responsive adjustments */
   @media (max-width: 500px) {
-    .btn { min-width: 100%; padding: .6rem; font-size: 0.9rem; }
+    /* CORRECCIÓN SOLICITADA: Botón comienza mantiene ancho consistente */
+    .btn { min-width: 140px; padding: .75rem 1.2rem; font-size: 1rem; } 
+    
     .advice-box { padding: 0.8rem; }
     .interaction-wrapper { max-width: 100%; }
-    .game-subtitle { font-size: 1.2rem; }
+    .game-subtitle { font-size: 0.8rem; }
   }
 </style>
 </head>
@@ -242,13 +271,15 @@
     <!-- H1 Eliminado aquí según petición -->
     <div class="game-info">
       <div class="timer" id="timer">00:00</div>
-      <div class="progress-bar" aria-label="Progreso"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-bar" aria-label="Progreso">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="game-subtitle" id="animalTypeLabel">Mamífero</div>
+      </div>
       <div class="score-label">Puntos: <span id="currentScore">0</span></div>
     </div>
 
     <div class="stage-content">
-        <!-- Etiqueta del tipo de animal ahora funciona como título de la actividad -->
-        <div class="game-subtitle" id="animalTypeLabel">Mamífero</div>
+        <!-- Etiqueta movida dentro de progress-bar -->
         
         <div class="interaction-wrapper" id="interactionWrapper">
             <img class="main-image" id="animalImage" src="" alt="Animal con extremidades">
